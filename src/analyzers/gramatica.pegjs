@@ -15,7 +15,10 @@ statement
   / block
 
 variableDeclaration
-  = "var" _ id:identifier _ ":" _ type:dataType {
+  = "var" _ id:identifier _ ":" _ type:dataType _ "=" _ value:expression {
+      return { type: "VariableDeclaration", name: id, dataType: type, value: value };
+    }
+  / "var" _ id:identifier _ ":" _ type:dataType {
       return { type: "VariableDeclaration", name: id, dataType: type };
     }
 
@@ -56,15 +59,32 @@ block
     }
 
 loop
-  = "for" _ init:assignment? ";" _ condition:comparison? ";" _ update:assignment? _ loopBody:block {
-      return { type: "ForLoop", init: init || null, condition: condition || null, update: update || null, body: loopBody };
+  = "for" _ "(" _ init:forInit? _ ";" _ condition:comparison? _ ";" _ update:assignment? _ ")" _ loopBody:block {
+      return {
+        type: "ForLoop",
+        init: init || null,
+        condition: condition || null,
+        update: update || null,
+        body: loopBody
+      };
     }
-  / "for" _ condition:comparison _ loopBody:block {
-      return { type: "WhileLoop", condition: condition, body: loopBody };
+  / "for" _ "(" _ condition:comparison _ ")" _ loopBody:block {
+      return {
+        type: "WhileLoop",
+        condition: condition,
+        body: loopBody
+      };
     }
-  / "for" _ loopBody:block {
-      return { type: "InfiniteLoop", body: loopBody };
+  / "for" _ "(" _ ")" _ loopBody:block {
+      return {
+        type: "InfiniteLoop",
+        body: loopBody
+      };
     }
+
+forInit
+  = assignment
+  / variableDeclaration
 
 comparison
   = left:additive _ op:comparisonOperator _ right:additive {
