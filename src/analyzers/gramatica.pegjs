@@ -31,7 +31,7 @@ assignment
     }
 
 printStatement
-  = "print" _ value:(string / identifier / number) {
+  = "print" _ "(" _ value:(string / identifier / number) _ ")" {
       return { type: "PrintStatement", value: value };
     }
 
