@@ -1,30 +1,33 @@
-// src/analyzers/analyzeSyntax.js
-const parser = require('./sintactico.js'); // Importar el parser usando require
+// analyzeSyntax.js
+const peg = require("pegjs");
+const fs = require("fs");
+const path = require("path");
+const { handleSyntaxError } = require("./sintactico");
 
-/**
- * Analiza el código fuente y genera un árbol sintáctico.
- * @param {string} code - El código fuente a analizar.
- * @returns {object} Un objeto con el resultado del análisis.
- */
+const grammarPath = path.resolve(__dirname, "gramatica.pegjs");
+
+// Leer y compilar la gramática
+const grammar = fs.readFileSync(grammarPath, "utf8");
+const parser = peg.generate(grammar);
+
+// Función para analizar la sintaxis
 function analyzeSyntax(code) {
-    try {
-        const syntaxTree = parser.parse(code); // Llama a la función `parse`
-        return {
-            success: true,
-            syntaxTree,
-        };
-    } catch (error) {
-        return {
-            success: false,
-            errors: [
-                {
-                    message: error.message || "Error desconocido",
-                    line: error.location?.start.line || "-",
-                    column: error.location?.start.column || "-",
-                },
-            ],
-        };
-    }
+  try {
+    // Intentar analizar el código con el parser
+    const result = parser.parse(code);
+
+    // Si no se lanza un error, la sintaxis es correcta
+    return { success: true, result };
+  } catch (error) {
+    // Si ocurre un error, lo manejamos y lo clasificamos
+    const errorDetails = handleSyntaxError(error);
+
+    // Retornar el error al frontend
+    return {
+      success: false,
+      error: errorDetails.error, // Pasamos el error detallado al frontend
+    };
+  }
 }
 
-module.exports = { analyzeSyntax }; // Exporta la función usando CommonJS
+module.exports = analyzeSyntax;

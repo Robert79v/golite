@@ -13,8 +13,7 @@ const App = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [code, setCode] = useState(""); // Contenido del editor
     const [tokens, setTokens] = useState([]); // Tokens léxicos
-    const [errors, setErrors] = useState([]); // Errores léxicos
-    const [syntaxErrors, setSyntaxErrors] = useState([]); // Errores sintácticos
+    const [allErrors, setAllErrors] = useState([]); // Unificación de errores léxicos y sintácticos
     const [isLexicalComplete, setLexicalComplete] = useState(false); // Estado del léxico
     const [syntaxTree, setSyntaxTree] = useState(null);
     const [isSemanticAnalysisEnabled, setSemanticAnalysisEnabled] = useState(false); // Estado del análisis semántico
@@ -22,8 +21,7 @@ const App = () => {
     const [currentTab, setCurrentTab] = useState(0); // Estado para el tab actual
 
     const clearErrors = () => {
-        setErrors([]);
-        setSyntaxErrors([]);
+        setAllErrors([]);
     };
 
     const handleTabChange = (event, newValue) => {
@@ -49,7 +47,7 @@ const App = () => {
     
             // Actualiza los estados con los resultados
             setTokens(analyzedTokens); // Actualiza la lista de tokens
-            setErrors(analyzedErrors); // Actualiza la lista de errores
+            setAllErrors(analyzedErrors); // Actualiza la lista de errores léxicos
     
             // Verifica si hay errores
             if (analyzedErrors.length === 0) {
@@ -61,7 +59,7 @@ const App = () => {
             }
         } catch (error) {
             // Manejo de errores inesperados en el análisis
-            setErrors([{ error: error.message, line: '-', column: '-' }]); // Error genérico
+            setAllErrors([{ error: error.message, line: '-', column: '-' }]); // Error genérico
             setResultado('Error al ejecutar el análisis léxico.'); // Mensaje en la consola
             setLexicalComplete(false); // Asegura que el flujo no continúe
         }
@@ -73,7 +71,7 @@ const App = () => {
             if (analysis.success) {
                 setResultado("Análisis Sintáctico Completado: No se encontraron errores.");
                 setSyntaxTree(analysis.syntaxTree);
-                setSyntaxErrors([]); // Limpia los errores sintácticos
+                setAllErrors([]); // Limpia los errores sintácticos
                 setSemanticAnalysisEnabled(true); // Habilitar análisis semántico
             } else {
                 setResultado("Análisis Sintáctico Completado: Se encontraron errores.");
@@ -82,19 +80,17 @@ const App = () => {
                     line: err.line || "-",
                     column: err.column || "-",
                 }));
-                setSyntaxErrors(formattedErrors);
+                setAllErrors(prevErrors => [...prevErrors, ...formattedErrors]); // Combina con los errores léxicos
                 setSyntaxTree(null); // Vacía el árbol
                 setSemanticAnalysisEnabled(false); // Deshabilitar análisis semántico
             }
         } catch (error) {
             setResultado("Error al ejecutar el análisis sintáctico.");
-            setSyntaxErrors([
-                {
-                    error: error.message || "Error desconocido",
-                    line: "-",
-                    column: "-",
-                },
-            ]);
+            setAllErrors([{
+                error: error.message || "Error desconocido",
+                line: "-",
+                column: "-",
+            }]);
             setSyntaxTree(null);
             setSemanticAnalysisEnabled(false);
         }
@@ -110,16 +106,14 @@ const App = () => {
         } catch (error) {
             return {
                 success: false,
-                errors: [
-                    {
-                        message: error.message || "Error desconocido",
-                        line: error.location?.start.line || "-",
-                        column: error.location?.start.column || "-",
-                    },
-                ],
+                errors: [{
+                    message: error.message || "Error desconocido",
+                    line: error.location?.start.line || "-",
+                    column: error.location?.start.column || "-",
+                }],
             };
         }
-    };    
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#3f555d', color: '#fff' }}>            
@@ -129,11 +123,10 @@ const App = () => {
                 </div>    
 
                 <div>
-                {/* El botón para subir archivos */}
+                    {/* El botón para subir archivos */}
                     <FileUploadButton onFileUpload={handleFileUpload} />
                 </div>            
                 <div>
-
                     <AnalysisButtons
                         handleLexicalAnalysis={handleLexicalAnalysis}
                         handleSyntaxAnalysis={handleSyntaxAnalysis}
@@ -148,6 +141,7 @@ const App = () => {
             </header>
 
             <TeamModal isOpen={isModalOpen} onClose={handleCloseModal} />
+            
             {/* Main Content */}
             <Grid item xs={12} md={8}>
                 <Box sx={{ padding: 2 }}>
@@ -186,11 +180,10 @@ const App = () => {
 
             <Footer
                 resultado={resultado} // Mensaje general del resultado
-                errors={[...errors, ...syntaxErrors]} // Combina errores léxicos y sintácticos
+                errors={allErrors} // Combina errores léxicos y sintácticos
                 clearErrors={clearErrors} // Función para limpiar los errores
             />
-       
-            </div>
+        </div>
     );
 };
 
