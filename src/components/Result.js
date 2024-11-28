@@ -56,10 +56,11 @@ const Footer = ({ resultado, errors, clearErrors }) => {
                                 <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
                                     {errors.map((error, index) => (
                                         <li key={index} style={{ marginBottom: '10px' }}>
+                                            {/* Mostrar el número del error y su descripción al principio */}
                                             <Typography variant="body2" color="error">
-                                                <strong>Mensaje:</strong> {error.error || 'Error no especificado'}
+                                                <strong>Error {error.code}:</strong> {error.message || 'Error no especificado'}
                                             </Typography>
-                                            <Typography variant="body2" color="textSecondary">
+                                            <Typography variant="body2" color="white">
                                                 <strong>Línea:</strong> {error.line || 'N/A'}, <strong>Columna:</strong> {error.column || 'N/A'}
                                             </Typography>
                                         </li>
@@ -77,8 +78,8 @@ const Footer = ({ resultado, errors, clearErrors }) => {
                             variant="outlined"
                             sx={{
                                 marginTop: 2,
-                                color: '#8bb3bf',
-                                borderColor: '#8bb3bf',
+                                color: '#fff',
+                                borderColor: '#fff',
                                 '&:hover': { backgroundColor: '#8bb3bf', color: '#fff' },
                             }}
                             onClick={clearErrors}
