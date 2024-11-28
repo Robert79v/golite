@@ -34,6 +34,19 @@ export function analyzeLexical(code) {
     const tokens = [];
     const errors = [];
 
+    const errorMessages = {
+        "Caracter no válido": {
+            code: 3,
+            type: "Léxico",
+            message: "Símbolo no válido en el código: Caracteres desconocidos."
+        },
+        "Incorrecto cierre de cadena": {
+            code: 4,
+            type: "Léxico",
+            message: "Literal de cadena no cerrado: Falta el cierre de comillas en una cadena."
+        },
+    };
+
     let token;
     while ((token = lexer.next())) {
         if (token.type === 'whitespace') {
@@ -41,15 +54,21 @@ export function analyzeLexical(code) {
             continue;
         } else if (token.type === 'invalid') {
             // Reportar caracteres no válidos
+            const mappedError = errorMessages["Caracter no válido"];
             errors.push({
-                error: `Caracter no válido "${token.value}"`,
+                code: mappedError.code,
+                type: mappedError.type,
+                message: mappedError.message,
                 line: token.line,
                 column: token.col,
             });
         } else if (token.type === 'unterminatedString') {
             // Reportar cadenas sin cierre
+            const mappedError = errorMessages["Incorrecto cierre de cadena"];
             errors.push({
-                error: `Incorrecto cierre de cadena`,
+                code: mappedError.code,
+                type: mappedError.type,
+                message: mappedError.message,
                 line: token.line,
                 column: token.col,
             });
