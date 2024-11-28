@@ -6,7 +6,7 @@ const CodeEditor = ({ code, setCode }) => {
         <div style={{ marginBottom: '20px' }}>
             <Editor
                 height="60vh"
-                language="javascript"
+                language="go"
                 theme="vs-dark"
                 value={code}
                 onChange={(value) => setCode(value || '')} // Maneja el caso cuando el editor está vacío

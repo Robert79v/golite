@@ -4,11 +4,12 @@ start
     }
 
 statements
-  = statement (";" _)? // Permitir `;` opcional después de cada declaración
+  = statement (";" _)? // Cada declaración puede estar separada opcionalmente por `;`
 
 statement
   = variableDeclaration
   / assignment
+  / printStatement
   / conditional
   / loop
   / block
@@ -18,23 +19,42 @@ variableDeclaration
       return { type: "VariableDeclaration", name: id, dataType: type };
     }
 
+dataType
+  = "int" { return "int"; }
+  / "float" { return "float"; }
+  / "string" { return "string"; }
+  / "bool" { return "bool"; }
+
 assignment
   = id:identifier _ "=" _ value:expression {
       return { type: "Assignment", variable: id, value: value };
     }
 
-// Condicionales
+printStatement
+  = "print" _ value:(string / identifier / number) {
+      return { type: "PrintStatement", value: value };
+    }
+
 conditional
-  = "if" _ "(" _ condition:comparison _ ")" _ thenBlock:block elsePart:("else" _ elseBlock:block)? {
+  = "if" _ "(" _ condition:comparison _ ")" _ thenBlock:block _ elseBlock:elseClause? {
       return {
         type: "IfStatement",
         condition: condition,
         thenBlock: thenBlock,
-        elseBlock: elsePart ? elsePart[1] : null
+        elseBlock: elseBlock || null
       };
     }
 
-// Bucles
+elseClause
+  = "else" _ elseBlock:block {
+      return elseBlock;
+    }
+
+block
+  = "{" _ stmts:statements* _ "}" {
+      return { type: "Block", statements: stmts.map(s => s[0]) };
+    }
+
 loop
   = "for" _ init:assignment? ";" _ condition:comparison? ";" _ update:assignment? _ loopBody:block {
       return { type: "ForLoop", init: init || null, condition: condition || null, update: update || null, body: loopBody };
@@ -46,26 +66,12 @@ loop
       return { type: "InfiniteLoop", body: loopBody };
     }
 
-// Bloques
-block
-  = "{" _ stmts:statements* _ "}" {
-      return { type: "Block", statements: stmts };
-    }
-
-dataType
-  = "int" { return "int"; }
-  / "float" { return "float"; }
-  / "string" { return "string"; }
-  / "bool" { return "bool"; }
-
-// Comparaciones
 comparison
   = left:additive _ op:comparisonOperator _ right:additive {
       return { type: "Comparison", operator: op, left: left, right: right };
     }
   / additive
 
-// Expresiones
 expression
   = additive
 
@@ -91,7 +97,6 @@ factor
 comparisonOperator
   = "==" / "!=" / "<=" / ">=" / "<" / ">"
 
-// Primitivas
 number
   = [0-9]+ ("." [0-9]+)? {
       return { type: "Number", value: parseFloat(text()) };
@@ -111,7 +116,6 @@ identifier
       return text();
     }
 
-// Espacios
 _ "whitespace"
   = [ \t\n\r]* {
       return null;
